@@ -66,14 +66,10 @@ func badMethod(w http.ResponseWriter) {
 
 func main() {
 	//Get state API
-
-	//Toggle state API
-
-	//Add schedule API
-
-	//Remove schedule API
-
 	http.HandleFunc("/", getIndex)
+	//Toggle state API
 	http.HandleFunc("/toggle", toggleState)
+	//Add schedule API
+	//Remove schedule API
 	http.ListenAndServe(":8000", nil)
 }
