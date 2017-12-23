@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 )
 
 type Schedule struct {
@@ -15,6 +16,7 @@ type Schedule struct {
 }
 
 type State struct {
+	sync.Mutex
 	CurrentState bool
 	Schedules    []Schedule
 }
@@ -23,7 +25,7 @@ func getInitialState() State {
 	//load json
 	//setup pins
 	fmt.Println("Getting initial state")
-	return State{false, []Schedule{
+	return State{sync.Mutex{}, false, []Schedule{
 		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
 		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
 	}}
@@ -44,6 +46,9 @@ func toggleState(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		badMethod(w)
 	}
+	state.Lock()
+	state.CurrentState = !state.CurrentState
+	state.Unlock()
 }
 
 func badMethod(w http.ResponseWriter) {
@@ -52,7 +57,7 @@ func badMethod(w http.ResponseWriter) {
 }
 
 func main() {
-	//Get initial state API
+	//Get state API
 
 	//Toggle state API
 
@@ -61,5 +66,6 @@ func main() {
 	//Remove schedule API
 
 	http.HandleFunc("/", getIndex)
+	http.HandleFunc("/toggle", toggleState)
 	http.ListenAndServe(":8000", nil)
 }
