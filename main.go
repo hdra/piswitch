@@ -21,6 +21,13 @@ type State struct {
 	Schedules    []Schedule
 }
 
+func (s *State) Toggle() {
+	s.Lock()
+	s.CurrentState = !state.CurrentState
+	//Set GPIO pin
+	s.Unlock()
+}
+
 func getInitialState() State {
 	//load json
 	//setup pins
@@ -47,10 +54,7 @@ func toggleState(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		badMethod(w)
 	} else {
-		state.Lock()
-		state.CurrentState = !state.CurrentState
-		//call rpio functions
-		state.Unlock()
+		state.Toggle()
 		w.WriteHeader(http.StatusOK)
 	}
 }
