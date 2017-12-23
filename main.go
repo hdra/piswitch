@@ -36,19 +36,23 @@ var state = getInitialState()
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		badMethod(w)
+	} else {
+		b, _ := json.Marshal(state)
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, string(b))
 	}
-	b, _ := json.Marshal(state)
-	w.Header().Set("Content-Type", "application/json")
-	io.WriteString(w, string(b))
 }
 
 func toggleState(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		badMethod(w)
+	} else {
+		state.Lock()
+		state.CurrentState = !state.CurrentState
+		//call rpio functions
+		state.Unlock()
+		w.WriteHeader(http.StatusOK)
 	}
-	state.Lock()
-	state.CurrentState = !state.CurrentState
-	state.Unlock()
 }
 
 func badMethod(w http.ResponseWriter) {
