@@ -20,6 +20,25 @@ type SchedulesContainer struct {
 	Entries []Schedule
 }
 
+func (c *SchedulesContainer) AddSchedule(schedule Schedule) {
+	c.Lock()
+	c.Entries = append(c.Entries, schedule)
+	//Update crons
+	c.Unlock()
+}
+
+func (c *SchedulesContainer) RemoveSchedule(id string) {
+	c.Lock()
+	for i, schedule := range c.Entries {
+		if schedule.Id == id {
+			c.Entries = append(c.Entries[:i], c.Entries[i+1:]...)
+			break
+		}
+	}
+	//Update crons
+	c.Unlock()
+}
+
 type State struct {
 	sync.Mutex
 	CurrentState bool
@@ -27,8 +46,22 @@ type State struct {
 
 func (s *State) Toggle() {
 	s.Lock()
-	s.CurrentState = !state.CurrentState
 	//Set GPIO pin
+	s.CurrentState = !state.CurrentState
+	s.Unlock()
+}
+
+func (s *State) On() {
+	s.Lock()
+	// Set pin to HIGH
+	s.CurrentState = true
+	s.Unlock()
+}
+
+func (s *State) Off() {
+	s.Lock()
+	//Set GPIO pin to LOW
+	s.CurrentState = false
 	s.Unlock()
 }
 
