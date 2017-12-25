@@ -15,6 +15,11 @@ type Schedule struct {
 	Command string
 }
 
+type SchedulesContainer struct {
+	sync.Mutex
+	Entries []Schedule
+}
+
 type State struct {
 	sync.Mutex
 	CurrentState bool
@@ -33,12 +38,14 @@ func getInitialState() State {
 	return State{sync.Mutex{}, false}
 }
 
-func loadSchedules() []Schedule {
+func loadSchedules() SchedulesContainer {
 	//load schedules from json
-	return []Schedule{
-		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
-		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
-	}
+	return SchedulesContainer{
+		sync.Mutex{},
+		[]Schedule{
+			{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
+			{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
+		}}
 }
 
 var state = getInitialState()
@@ -51,7 +58,7 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 		data := struct {
 			CurrentState bool
 			Schedules    []Schedule
-		}{state.CurrentState, schedules}
+		}{state.CurrentState, schedules.Entries}
 		b, _ := json.Marshal(data)
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, string(b))
