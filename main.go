@@ -18,7 +18,6 @@ type Schedule struct {
 type State struct {
 	sync.Mutex
 	CurrentState bool
-	Schedules    []Schedule
 }
 
 func (s *State) Toggle() {
@@ -29,22 +28,31 @@ func (s *State) Toggle() {
 }
 
 func getInitialState() State {
-	//load json
 	//setup pins
 	fmt.Println("Getting initial state")
-	return State{sync.Mutex{}, false, []Schedule{
+	return State{sync.Mutex{}, false}
+}
+
+func loadSchedules() []Schedule {
+	//load schedules from json
+	return []Schedule{
 		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
 		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
-	}}
+	}
 }
 
 var state = getInitialState()
+var schedules = loadSchedules()
 
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		badMethod(w)
 	} else {
-		b, _ := json.Marshal(state)
+		data := struct {
+			CurrentState bool
+			Schedules    []Schedule
+		}{state.CurrentState, schedules}
+		b, _ := json.Marshal(data)
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, string(b))
 	}
