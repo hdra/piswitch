@@ -86,30 +86,34 @@ var schedules = loadSchedules()
 
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
-		badMethod(w)
-	} else {
-		data := struct {
-			CurrentState bool
-			Schedules    []Schedule
-		}{state.CurrentState, schedules.Entries}
-		b, _ := json.Marshal(data)
-		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, string(b))
+		http.Error(w, "Invalid method", 400)
+		return
 	}
+	data := struct {
+		CurrentState bool
+		Schedules    []Schedule
+	}{state.CurrentState, schedules.Entries}
+	b, _ := json.Marshal(data)
+	w.Header().Set("Content-Type", "application/json")
+	io.WriteString(w, string(b))
 }
 
 func toggleState(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		badMethod(w)
-	} else {
-		state.Toggle()
-		w.WriteHeader(http.StatusOK)
+		http.Error(w, "Invalid method", 400)
+		return
 	}
+	state.Toggle()
+	w.WriteHeader(http.StatusOK)
 }
 
-func badMethod(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusBadRequest)
-	io.WriteString(w, "Bad request")
+func addSchedule(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Invalid method", 400)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 func main() {
@@ -118,6 +122,7 @@ func main() {
 	//Toggle state API
 	http.HandleFunc("/toggle", toggleState)
 	//Add schedule API
+	http.HandleFunc("/add", addSchedule)
 	//Remove schedule API
 	http.ListenAndServe(":8000", nil)
 }
