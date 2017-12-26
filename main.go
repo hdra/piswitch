@@ -112,7 +112,17 @@ func addSchedule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid method", 400)
 		return
 	}
-
+	if r.Body == nil {
+		http.Error(w, "Missing param", 400)
+		return
+	}
+	var schedule Schedule
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	schedules.AddSchedule(schedule)
 	w.WriteHeader(http.StatusCreated)
 }
 
