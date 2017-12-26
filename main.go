@@ -126,6 +126,25 @@ func addSchedule(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+func removeSchedule(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Invalid method", 400)
+		return
+	}
+	if r.Body == nil {
+		http.Error(w, "Missing param", 400)
+		return
+	}
+	var schedule Schedule
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	schedules.RemoveSchedule(schedule.Id)
+	w.WriteHeader(http.StatusCreated)
+}
+
 func main() {
 	//Get state API
 	http.HandleFunc("/", getIndex)
@@ -134,5 +153,6 @@ func main() {
 	//Add schedule API
 	http.HandleFunc("/add", addSchedule)
 	//Remove schedule API
+	http.HandleFunc("/remove", removeSchedule)
 	http.ListenAndServe(":8000", nil)
 }
