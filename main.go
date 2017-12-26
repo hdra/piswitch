@@ -15,19 +15,19 @@ type Schedule struct {
 	Command string
 }
 
-type SchedulesContainer struct {
+type Scheduler struct {
 	sync.Mutex
 	Entries []Schedule
 }
 
-func (c *SchedulesContainer) AddSchedule(schedule Schedule) {
+func (c *Scheduler) AddSchedule(schedule Schedule) {
 	c.Lock()
 	c.Entries = append(c.Entries, schedule)
 	//Update crons
 	c.Unlock()
 }
 
-func (c *SchedulesContainer) RemoveSchedule(id string) {
+func (c *Scheduler) RemoveSchedule(id string) {
 	c.Lock()
 	for i, schedule := range c.Entries {
 		if schedule.Id == id {
@@ -71,9 +71,9 @@ func getInitialState() State {
 	return State{sync.Mutex{}, false}
 }
 
-func loadSchedules() SchedulesContainer {
+func loadSchedules() Scheduler {
 	//load schedules from json
-	return SchedulesContainer{
+	return Scheduler{
 		sync.Mutex{},
 		[]Schedule{
 			{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
