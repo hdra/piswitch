@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
+
+	"github.com/hdra/cron"
 )
 
 type Schedule struct {
@@ -15,23 +18,48 @@ type Schedule struct {
 	Command string
 }
 
+func (s Schedule) GetCronSpec() string {
+	hour := s.Time / 3600
+	minutes := (s.Time - (hour * 3600)) / 60
+	seconds := s.Time - (hour * 3600) - (minutes * 60)
+
+	days := make([]string, len(s.Days))
+	for i, v := range s.Days {
+		days[i] = v[:3]
+	}
+
+	return fmt.Sprintf("%v %v %v * * %v", seconds, minutes, hour, strings.Join(days, ","))
+}
+
+type CronID = cron.EntryID
 type Scheduler struct {
 	sync.Mutex
-	Entries []Schedule
+	cron    *cron.Cron
+	Entries map[CronID]Schedule
+}
+
+func (c *Scheduler) Start() {
+	c.cron.Start()
 }
 
 func (c *Scheduler) AddSchedule(schedule Schedule) {
 	c.Lock()
-	c.Entries = append(c.Entries, schedule)
-	//Update crons
+	id, err := c.cron.AddFunc(schedule.GetCronSpec(), func() {
+		fmt.Println("Running for", schedule.Id)
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+	c.Entries[id] = schedule
 	c.Unlock()
 }
 
 func (c *Scheduler) RemoveSchedule(id string) {
 	c.Lock()
-	for i, schedule := range c.Entries {
+	for cronid, schedule := range c.Entries {
 		if schedule.Id == id {
-			c.Entries = append(c.Entries[:i], c.Entries[i+1:]...)
+			c.cron.Remove(cronid)
+			delete(c.Entries, cronid)
 			break
 		}
 	}
@@ -72,13 +100,24 @@ func getInitialState() State {
 }
 
 func loadSchedules() Scheduler {
-	//load schedules from json
-	return Scheduler{
+	jobs := make(map[CronID]Schedule)
+	scheduler := Scheduler{
 		sync.Mutex{},
-		[]Schedule{
-			{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
-			{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
-		}}
+		cron.New(),
+		jobs,
+	}
+
+	//load schedules from json
+	schedules := []Schedule{
+		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
+		{"def", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
+	}
+	for _, schedule := range schedules {
+		scheduler.AddSchedule(schedule)
+	}
+
+	scheduler.Start()
+	return scheduler
 }
 
 var state = getInitialState()
@@ -89,10 +128,18 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid method", 400)
 		return
 	}
+
+	entries := make([]Schedule, len(schedules.Entries))
+	index := 0
+	for _, val := range schedules.Entries {
+		entries[index] = val
+		index++
+	}
+
 	data := struct {
 		CurrentState bool
 		Schedules    []Schedule
-	}{state.CurrentState, schedules.Entries}
+	}{state.CurrentState, entries}
 	b, _ := json.Marshal(data)
 	w.Header().Set("Content-Type", "application/json")
 	io.WriteString(w, string(b))
