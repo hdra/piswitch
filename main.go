@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,7 +46,6 @@ func (c *Scheduler) Start() {
 func (c *Scheduler) AddSchedule(schedule Schedule) {
 	c.Lock()
 	id, err := c.cron.AddFunc(schedule.GetCronSpec(), func() {
-		fmt.Println("=================")
 		fmt.Printf("Running for %v, setting to: %v\n", schedule.Id, schedule.Command)
 		switch schedule.Command {
 		case "On":
@@ -64,17 +64,18 @@ func (c *Scheduler) AddSchedule(schedule Schedule) {
 	c.Unlock()
 }
 
-func (c *Scheduler) RemoveSchedule(id string) {
+func (c *Scheduler) RemoveSchedule(id string) error {
 	c.Lock()
+	defer c.Unlock()
 	for cronid, schedule := range c.Entries {
 		if schedule.Id == id {
 			c.cron.Remove(cronid)
 			delete(c.Entries, cronid)
-			break
+			return nil
 		}
 	}
-	//Update crons
-	c.Unlock()
+
+	return errors.New("Schedule not found")
 }
 
 type State struct {
@@ -198,7 +199,11 @@ func removeSchedule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-	schedules.RemoveSchedule(schedule.Id)
+	err = schedules.RemoveSchedule(schedule.Id)
+	if err != nil {
+		http.Error(w, err.Error(), 404)
+		return
+	}
 	w.WriteHeader(http.StatusCreated)
 }
 
