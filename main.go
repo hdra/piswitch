@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
 	"github.com/hdra/cron"
+	rpio "github.com/stianeikeland/go-rpio"
 )
 
 type Schedule struct {
@@ -35,6 +37,7 @@ func (s Schedule) GetCronSpec() string {
 type CronID = cron.EntryID
 type Scheduler struct {
 	sync.Mutex
+	state   *State
 	cron    *cron.Cron
 	Entries map[CronID]Schedule
 }
@@ -49,11 +52,11 @@ func (c *Scheduler) AddSchedule(schedule Schedule) {
 		fmt.Printf("Running for %v, setting to: %v\n", schedule.Id, schedule.Command)
 		switch schedule.Command {
 		case "On":
-			state.On()
+			c.state.On()
 		case "Off":
-			state.Off()
+			c.state.Off()
 		case "Toggle":
-			state.Toggle()
+			c.state.Toggle()
 		}
 		fmt.Println("=================")
 	})
@@ -80,48 +83,61 @@ func (c *Scheduler) RemoveSchedule(id string) error {
 
 type State struct {
 	sync.Mutex
+	pin          rpio.Pin
 	CurrentState bool
+}
+
+func (s *State) Init(pin int) {
+	if err := rpio.Open(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	s.pin = rpio.Pin(pin)
+	s.pin.Output()
+}
+
+func (s *State) Cleanup() {
+	rpio.Close()
 }
 
 func (s *State) Toggle() {
 	s.Lock()
-	//Set GPIO pin
+	s.pin.Toggle()
 	s.CurrentState = !state.CurrentState
 	s.Unlock()
 }
 
 func (s *State) On() {
 	s.Lock()
-	// Set pin to HIGH
+	s.pin.High()
 	s.CurrentState = true
 	s.Unlock()
 }
 
 func (s *State) Off() {
 	s.Lock()
-	//Set GPIO pin to LOW
+	s.pin.Low()
 	s.CurrentState = false
 	s.Unlock()
 }
 
-func getInitialState() State {
-	//setup pins
-	fmt.Println("Getting initial state")
-	return State{sync.Mutex{}, false}
+func initState() State {
+	return State{sync.Mutex{}, 0, false}
 }
 
-func loadSchedules() Scheduler {
+func initScheduler(state *State) Scheduler {
 	jobs := make(map[CronID]Schedule)
 	scheduler := Scheduler{
 		sync.Mutex{},
+		state,
 		cron.New(),
 		jobs,
 	}
 
 	//load schedules from json
 	schedules := []Schedule{
-		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
-		{"def", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "On"},
+		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "Toggle"},
 	}
 	for _, schedule := range schedules {
 		scheduler.AddSchedule(schedule)
@@ -131,18 +147,15 @@ func loadSchedules() Scheduler {
 	return scheduler
 }
 
-var state = getInitialState()
-var schedules = loadSchedules()
-
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Invalid method", 400)
 		return
 	}
 
-	entries := make([]Schedule, len(schedules.Entries))
+	entries := make([]Schedule, len(scheduler.Entries))
 	index := 0
-	for _, val := range schedules.Entries {
+	for _, val := range scheduler.Entries {
 		entries[index] = val
 		index++
 	}
@@ -180,7 +193,7 @@ func addSchedule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-	schedules.AddSchedule(schedule)
+	scheduler.AddSchedule(schedule)
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -199,7 +212,7 @@ func removeSchedule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-	err = schedules.RemoveSchedule(schedule.Id)
+	err = scheduler.RemoveSchedule(schedule.Id)
 	if err != nil {
 		http.Error(w, err.Error(), 404)
 		return
@@ -207,7 +220,17 @@ func removeSchedule(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+const PIN = 14
+
+var scheduler Scheduler
+var state State
+
 func main() {
+	state = initState()
+	state.Init(PIN)
+	defer state.Cleanup()
+	scheduler = initScheduler(&state)
+
 	//Get state API
 	http.HandleFunc("/", getIndex)
 	//Toggle state API
