@@ -1,0 +1,55 @@
+.ScheduleList {
+  background-color: #f9f9f9;
+}
+
+.ScheduleEntry {
+  border-width: 1px;
+  border-style: solid none;
+  padding: 4px;
+  text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  user-select: none;
+}
+
+.ScheduleEntry .LeftContainer {
+  flex-grow: 1;
+}
+
+.ScheduleEntry .RightContainer {
+  display: flex;
+  vertical-align: middle;
+  align-items: center;
+  margin-right: 6px;
+}
+
+.ScheduleEntry .TimeDisplay {
+  font-size: 3.4em;
+}
+
+.ScheduleEntry .ScheduleCommand {
+  margin-left: 0.4em;
+  font-weight: 700;
+}
+.ScheduleEntry .ScheduleCommand.On {
+  color: #4ead8f;
+}
+.ScheduleEntry .ScheduleCommand.Off {
+  color: #ad370f;
+}
+.ScheduleEntry .ScheduleCommand.Toggle {
+  color: #34a6ed;
+}
+
+.ScheduleEntry .ScheduleDeleteButton {
+}
+
+.ScheduleEntry .InactiveDay {
+  font-weight: 100;
+  color: #b5b5b5;
+  margin-left: 2px;
+}
+.ScheduleEntry .ActiveDay {
+  font-weight: 900;
+  margin-left: 2px;
+}

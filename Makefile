@@ -1,8 +1,12 @@
 default: setup
 setup:
-	@make build
+	@make build.client
+	@make build.server
 	@make install
-build:
-	@GOOS=linux GOARCH=arm go build
+build.client:
+	@cd client && yarn build
+	@statik -src=client/build
+build.server:
+	@GOOS=linux GOARCH=arm go build -o build/piswitch
 install:
-	@scp piSwitch pi@raspberrypi.local:
+	@scp build/piswitch pi@raspberrypi.local:

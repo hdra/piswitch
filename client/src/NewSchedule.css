@@ -1,0 +1,98 @@
+.NewSchedule {
+}
+
+.NewSchedule .TimeInput {
+  width: 100%;
+  height: 1.2em;
+  font-size: 1.8em;
+  font-family: sans-serif;
+  text-align: center;
+  background-color: #f8f8f8;
+  border: 1px solid #ccc;
+  box-shadow: inset 0 1px 3px #ddd;
+  border-radius: 4px;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.NewSchedule .TimeInput:focus {
+  outline: 0;
+}
+
+.DaysInput {
+  display: flex;
+  text-align: center;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+.DaysInput input[type="checkbox"] {
+  margin: 0.5em 0;
+  display: inline-block;
+}
+.DaysInput label {
+  flex-grow: 1;
+}
+
+/*From PureCSS buttons*/
+.Button {
+  font-size: 100%;
+  padding: 0.5em 1em;
+  color: #BEBEBE;
+  border: none rgba(0, 0, 0, 0);  /*IE9 + everything else*/
+  background-color: #ebebeb;
+  text-decoration: none;
+  border-radius: 2px;
+  user-select:none;
+}
+
+.Button.active {
+  font-weight: bold;
+  background-color: #e1e1e1;
+}
+.Button.On.active {
+  color: #4ead8f;
+}
+.Button.Off.active {
+  color: #ad370f;
+}
+.Button.Toggle.active {
+  color: #34a6ed;
+}
+
+.Button:focus {
+  outline: 0;
+}
+
+.CommandInput {
+  display: flex;
+}
+
+.CommandInput .Button {
+  flex-grow: 1;
+  margin: 0;
+  border-radius: 0;
+  border-right: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.CommandInput .Button:first-child {
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+.CommandInput .Button:last-child {
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+  border-right: none;
+}
+
+.FormButton {
+  margin-top: 1.2em;
+}
+.Button.Expanded {
+  font-size: 1.2em;
+  width: 100%;
+  background-color: #8fb7aa;
+}
+.Button.Expanded.active {
+  color: #222;
+  background-color: #4ead8f;
+}

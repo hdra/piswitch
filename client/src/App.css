@@ -1,0 +1,33 @@
+.App-header {
+  background-color: #222;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  text-align: center;
+}
+
+.Modal {
+  position: absolute;
+  top: 30%;
+  bottom: 30%;
+  left: 40px;
+  right: 40px;
+  border: 1px solid #ccc;
+  background: #f8f8f8;
+  overflow: auto;
+  outline: none;
+  padding: 20px;
+}
+
+.NewButton {
+  font-size: 1.5em;
+  font-weight: bold;
+  background-color: #26bbc9;
+  color: #f8f8f8;
+  padding: 0.3em 1.2em;
+  border: none;
+  border-radius: 1em;
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  user-select: none;
+}

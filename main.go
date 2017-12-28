@@ -5,12 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 
+	_ "piswitch/statik"
+
 	"github.com/hdra/cron"
+	"github.com/rakyll/statik/fs"
 	rpio "github.com/stianeikeland/go-rpio"
 )
 
@@ -95,6 +99,7 @@ func (s *State) Init(pin int) {
 
 	s.pin = rpio.Pin(pin)
 	s.pin.Output()
+	s.pin.Low()
 }
 
 func (s *State) Cleanup() {
@@ -239,5 +244,13 @@ func main() {
 	http.HandleFunc("/api/add", addSchedule)
 	//Remove schedule API
 	http.HandleFunc("/api/remove", removeSchedule)
+
+	//Client App
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.Handle("/", http.FileServer(statikFS))
+
 	http.ListenAndServe(":8000", nil)
 }
