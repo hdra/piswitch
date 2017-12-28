@@ -15,10 +15,10 @@ import (
 )
 
 type Schedule struct {
-	Id      string
-	Time    int
-	Days    []string
-	Command string
+	Id      string   `json:"id"`
+	Time    int      `json:"time"`
+	Days    []string `json:"days"`
+	Command string   `json:"command"`
 }
 
 func (s Schedule) GetCronSpec() string {
@@ -161,8 +161,8 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		CurrentState bool
-		Schedules    []Schedule
+		CurrentState bool       `json:"currentState"`
+		Schedules    []Schedule `json:"schedules"`
 	}{state.CurrentState, entries}
 	b, _ := json.Marshal(data)
 	w.Header().Set("Content-Type", "application/json")
@@ -232,12 +232,12 @@ func main() {
 	scheduler = initScheduler(&state)
 
 	//Get state API
-	http.HandleFunc("/", getIndex)
+	http.HandleFunc("/api", getIndex)
 	//Toggle state API
-	http.HandleFunc("/toggle", toggleState)
+	http.HandleFunc("/api/toggle", toggleState)
 	//Add schedule API
-	http.HandleFunc("/add", addSchedule)
+	http.HandleFunc("/api/add", addSchedule)
 	//Remove schedule API
-	http.HandleFunc("/remove", removeSchedule)
+	http.HandleFunc("/api/remove", removeSchedule)
 	http.ListenAndServe(":8000", nil)
 }
