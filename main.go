@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -42,8 +43,28 @@ type CronID = cron.EntryID
 type Scheduler struct {
 	sync.Mutex
 	state   *State
+	data    string
 	cron    *cron.Cron
 	Entries map[CronID]Schedule
+}
+
+func (c *Scheduler) DumpData() {
+	entries := make([]Schedule, len(scheduler.Entries))
+	index := 0
+	for _, val := range scheduler.Entries {
+		entries[index] = val
+		index++
+	}
+	data, err := json.Marshal(entries)
+	if err != nil {
+		log.Println("Error serializing data", err.Error())
+		return
+	}
+	err = ioutil.WriteFile(c.data, data, 0644)
+	if err != nil {
+		log.Println("Error dumping data")
+		log.Println(err.Error())
+	}
 }
 
 func (c *Scheduler) Start() {
@@ -68,6 +89,7 @@ func (c *Scheduler) AddSchedule(schedule Schedule) {
 		panic(err.Error())
 	}
 	c.Entries[id] = schedule
+	c.DumpData()
 	c.Unlock()
 }
 
@@ -78,6 +100,7 @@ func (c *Scheduler) RemoveSchedule(id string) error {
 		if schedule.Id == id {
 			c.cron.Remove(cronid)
 			delete(c.Entries, cronid)
+			c.DumpData()
 			return nil
 		}
 	}
@@ -131,21 +154,28 @@ func initState() State {
 	return State{sync.Mutex{}, 0, false}
 }
 
-func initScheduler(state *State) Scheduler {
+func initScheduler(data string, state *State) Scheduler {
 	jobs := make(map[CronID]Schedule)
 	scheduler := Scheduler{
 		sync.Mutex{},
 		state,
+		data,
 		cron.New(),
 		jobs,
 	}
 
 	//load schedules from json
-	schedules := []Schedule{
-		{"abc", 1223, []string{"Monday", "Tuesday", "Wednesday"}, "Toggle"},
-	}
-	for _, schedule := range schedules {
-		scheduler.AddSchedule(schedule)
+	var schedules []Schedule
+	file, err := ioutil.ReadFile(data)
+	if err == nil {
+		e := json.Unmarshal(file, &schedules)
+		if e != nil {
+			log.Println(e.Error())
+		} else {
+			for _, schedule := range schedules {
+				scheduler.AddSchedule(schedule)
+			}
+		}
 	}
 
 	scheduler.Start()
@@ -226,6 +256,7 @@ func removeSchedule(w http.ResponseWriter, r *http.Request) {
 }
 
 const PIN = 14
+const DATAFILE = "data.json"
 
 var scheduler Scheduler
 var state State
@@ -234,7 +265,7 @@ func main() {
 	state = initState()
 	state.Init(PIN)
 	defer state.Cleanup()
-	scheduler = initScheduler(&state)
+	scheduler = initScheduler(DATAFILE, &state)
 
 	//Get state API
 	http.HandleFunc("/api", getIndex)
