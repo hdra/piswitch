@@ -12,3 +12,8 @@ Change the `PIN` constant defined on the `main.go` file to control which pin is 
 
 * Install [Statik](https://github.com/rakyll/statik)
 * run `make`
+
+## Start on boot
+
+Copy `configs/piswitch.service` to `/lib/systemd/system/piswitch.service` and
+run `sudo systemctl enable piswitch.service`

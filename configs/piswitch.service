@@ -1,0 +1,14 @@
+[Unit]
+Description=PI Switch Server
+After=network.target
+
+[Service]
+ExecStart=/home/pi/piswitch/piswitch
+WorkingDirectory=/home/pi/piswitch
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
