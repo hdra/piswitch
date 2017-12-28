@@ -49,7 +49,7 @@ func (c *Scheduler) Start() {
 func (c *Scheduler) AddSchedule(schedule Schedule) {
 	c.Lock()
 	id, err := c.cron.AddFunc(schedule.GetCronSpec(), func() {
-		fmt.Printf("Running for %v, setting to: %v\n", schedule.Id, schedule.Command)
+		fmt.Printf("Executing %v, setting to: %v\n", schedule.Id, schedule.Command)
 		switch schedule.Command {
 		case "On":
 			c.state.On()
