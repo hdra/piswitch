@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	_ "piswitch/statik"
+	_ "github.com/hdra/piswitch/statik"
 
 	"github.com/hdra/cron"
 	"github.com/rakyll/statik/fs"

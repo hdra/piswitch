@@ -25,6 +25,7 @@ class App extends React.Component <{}, AppState> {
     };
   }
   componentDidMount() {
+    // TODO: Extract into separate module with mockable behaviour for local dev
     fetch('/api').then((response) => {
       response.json().then((data) => {
         this.setState({
