@@ -9,4 +9,4 @@ build.client:
 build.server:
 	@GOOS=linux GOARCH=arm go build -o build/piswitch
 install:
-	@scp build/piswitch pi@raspberrypi.local:
+	@scp build/piswitch pi@raspberrypi.local:piswitch/piswitch
