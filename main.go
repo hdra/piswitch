@@ -122,7 +122,7 @@ func (s *State) Init(pin int) {
 
 	s.pin = rpio.Pin(pin)
 	s.pin.Output()
-	s.pin.Low()
+	s.pin.High() // Starts on high = Relay open.
 }
 
 func (s *State) Cleanup() {
@@ -138,14 +138,14 @@ func (s *State) Toggle() {
 
 func (s *State) On() {
 	s.Lock()
-	s.pin.High()
+	s.pin.Low()
 	s.CurrentState = true
 	s.Unlock()
 }
 
 func (s *State) Off() {
 	s.Lock()
-	s.pin.Low()
+	s.pin.High()
 	s.CurrentState = false
 	s.Unlock()
 }
@@ -255,7 +255,7 @@ func removeSchedule(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-const PIN = 14
+const PIN = 17
 const DATAFILE = "data.json"
 
 var scheduler Scheduler
