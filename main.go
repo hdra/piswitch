@@ -49,9 +49,10 @@ type Scheduler struct {
 }
 
 func (c *Scheduler) DumpData() {
-	entries := make([]Schedule, len(scheduler.Entries))
+	log.Println("Dumping data. Entries count:", len(c.Entries))
+	entries := make([]Schedule, len(c.Entries))
 	index := 0
-	for _, val := range scheduler.Entries {
+	for _, val := range c.Entries {
 		entries[index] = val
 		index++
 	}
@@ -73,8 +74,9 @@ func (c *Scheduler) Start() {
 
 func (c *Scheduler) AddSchedule(schedule Schedule) {
 	c.Lock()
+	defer c.Unlock()
 	id, err := c.cron.AddFunc(schedule.GetCronSpec(), func() {
-		fmt.Printf("Executing %v, setting to: %v\n", schedule.Id, schedule.Command)
+		log.Printf("Executing %v, setting to: %v\n", schedule.Id, schedule.Command)
 		switch schedule.Command {
 		case "On":
 			c.state.On()
@@ -90,7 +92,6 @@ func (c *Scheduler) AddSchedule(schedule Schedule) {
 	}
 	c.Entries[id] = schedule
 	c.DumpData()
-	c.Unlock()
 }
 
 func (c *Scheduler) RemoveSchedule(id string) error {
@@ -155,6 +156,7 @@ func initState() State {
 }
 
 func initScheduler(data string, state *State) Scheduler {
+	log.Println("Initializing scheduler")
 	jobs := make(map[CronID]Schedule)
 	scheduler := Scheduler{
 		sync.Mutex{},
@@ -172,8 +174,9 @@ func initScheduler(data string, state *State) Scheduler {
 		if e != nil {
 			log.Println(e.Error())
 		} else {
+			log.Printf("Restoring %v schedules\n", len(schedules))
 			for _, schedule := range schedules {
-				scheduler.AddSchedule(schedule)
+				scheduler.AddSchedule(schedule) //This is writing to file!
 			}
 		}
 	}
@@ -262,6 +265,7 @@ var scheduler Scheduler
 var state State
 
 func main() {
+	log.Println("Starting PiSwitch")
 	state = initState()
 	state.Init(PIN)
 	defer state.Cleanup()
@@ -283,5 +287,6 @@ func main() {
 	}
 	http.Handle("/", http.FileServer(statikFS))
 
+	log.Println("Serving PiSwitch on port 8000")
 	http.ListenAndServe(":8000", nil)
 }
